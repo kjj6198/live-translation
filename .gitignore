@@ -1,0 +1,8 @@
+node_modules
+dist
+.env*
+!.env.example
+.context
+.playwright-mcp
+macos/build
+macos/*.xcodeproj
