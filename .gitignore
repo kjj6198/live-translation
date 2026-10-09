@@ -1,8 +1,4 @@
-node_modules
-dist
-.env*
-!.env.example
+build
+*.xcodeproj
 .context
-.playwright-mcp
-macos/build
-macos/*.xcodeproj
+.DS_Store

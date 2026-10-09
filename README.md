@@ -1,23 +1,33 @@
-# Live Translation
+# Live Translation for macOS
 
-Speak English and hear it in Japanese. Speak Japanese and hear it in English.
+Live subtitles for talks. Speak English and Japanese subtitles appear over your slides. Speak Japanese and English subtitles appear. Everything runs on the Mac with Apple's Speech and Translation frameworks. It needs no API key and no network once the models are installed.
 
-Uses Gemini's real-time speech-to-speech model, `gemini-3.5-live-translate-preview`.
+Requires macOS 26.4 or later, Xcode 26, and a microphone. A Mac mini has no built-in one, so connect AirPods, a USB mic, or an iPhone.
 
-## Setup
+## Run
 
 ```sh
-pnpm install
-echo "GEMINI_API_KEY=your-key" > .env.local
-pnpm dev
+brew install xcodegen
+xcodegen generate
+open LiveTranslation.xcodeproj
 ```
 
-Open the printed URL in Chrome, press **Start**, and allow microphone access.
+Press Run in Xcode. The app has no window. Use the captions icon in the menu bar.
+
+- **Start Subtitles** (⌘S in the menu) starts listening. The first start downloads the English and Japanese speech models.
+- **I'm Speaking** sets the language you talk in. Choose English or Japanese when you know it. That runs one speech model instead of two and avoids wrong guesses. Detect Automatically handles both.
+- **Style** switches between the Classic, High Contrast, Light, and Outline presets.
+- **Customize Style…** opens a window for font, size, text color, background color, and whether the original sentence shows above the translation. Changes apply at once and are saved.
+
+Drag the subtitle to move it. It floats above other apps, including full-screen slideshows. If it ends up off screen, use "Move Subtitles Back to the Bottom of the Screen" in Customize Style.
+
+If subtitles show a "not installed" message, add English and Japanese in System Settings > General > Language & Region > Translation Languages.
 
 ## How it works
 
-- The model translates into one target language per session. The app opens two sessions, one targeting Japanese and one targeting English, and sends the same mic audio to both. With `echoTargetLanguage: false`, a session stays silent when the speech is already in its target language, so only the session for the other language responds.
-- The Vite dev server provides `/api/token`, which creates short-lived Live API tokens. The API key never reaches the browser.
-- The mic is muted while a translation plays. Otherwise the speakers feed back into the mic and the app translates its own output. Because of this, you can't talk over a translation while it plays.
-
-For the on-device macOS subtitle app, see [macos/README.md](macos/README.md).
+- Apple's speech models cannot tell which language is being spoken. In Detect Automatically mode the app runs an English and a Japanese `SpeechTranscriber` on the same audio and keeps the transcript with the higher confidence. If the Japanese transcript has no kana or kanji, it keeps the English one, which covers short replies like "Yes".
+- The subtitle updates while you talk. The app translates the newest text as soon as the previous translation finishes, so the translation catches up about once a second.
+- A subtitle ends when the transcribers stop revising their text for 1.2 s, or after 6 s of continuous speech so it stays about two lines long. The app then calls `SpeechAnalyzer.finalize(through:)` to get the final text right away. The mic level is not used, because a distant or quiet voice barely rises above the room noise.
+- The two previous sentences stay above the current one, smaller and at 0.7 opacity, so the audience can catch up. Each sentence keeps its place in the translation queue, so older ones still get their final translation after you move on.
+- Subtitles clear after 5 s of silence.
+- The app remembers where you dragged the subtitles and keeps them on the screen you left them on, even if the saved position would fall off screen.
